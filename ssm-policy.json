@@ -1,0 +1,1 @@
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["ssm:GetParameters","ssm:GetParameter"],"Resource":"arn:aws:ssm:us-east-1:009160070658:parameter/matching-py/*"},{"Effect":"Allow","Action":["kms:Decrypt"],"Resource":"arn:aws:kms:us-east-1:009160070658:key/aws/ssm"}]}

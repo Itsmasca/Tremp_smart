@@ -1,0 +1,47 @@
+{
+  "family": "matching-py",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::009160070658:role/matching-py-execution-role",
+  "taskRoleArn": "arn:aws:iam::009160070658:role/matching-py-task-role",
+  "containerDefinitions": [
+    {
+      "name": "matching-py",
+      "image": "009160070658.dkr.ecr.us-east-1.amazonaws.com/matching-py:latest",
+      "essential": true,
+      "environment": [
+        {"name": "LLM_PROVIDER",            "value": "bedrock"},
+        {"name": "BEDROCK_REGION",          "value": "us-east-1"},
+        {"name": "BEDROCK_LLM_MODEL_ID",    "value": "us.anthropic.claude-3-5-haiku-20241022-v1:0"},
+        {"name": "BEDROCK_EMBED_MODEL_ID",  "value": "amazon.titan-embed-text-v2:0"},
+        {"name": "EMBED_DIM",               "value": "256"},
+        {"name": "REDIS_STREAM",            "value": "rides.events"},
+        {"name": "REDIS_DLQ_STREAM",        "value": "rides.events.dlq"},
+        {"name": "REDIS_CONSUMER_GROUP",    "value": "matching-preferences"},
+        {"name": "REDIS_CONSUMER_NAME",     "value": "matching-py-1"},
+        {"name": "LOG_LEVEL",               "value": "INFO"}
+      ],
+      "secrets": [
+        {"name": "REDIS_URL",     "valueFrom": "arn:aws:ssm:us-east-1:009160070658:parameter/matching-py/REDIS_URL"},
+        {"name": "DATABASE_URL",  "valueFrom": "arn:aws:ssm:us-east-1:009160070658:parameter/matching-py/DATABASE_URL"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/matching-py",
+          "awslogs-region":        "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "python -c \"import app.shared.config\" || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 15
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "IpProtocol": "tcp",
+    "FromPort": 6379,
+    "ToPort": 6379,
+    "UserIdGroupPairs": [
+      {
+        "GroupId": "sg-0a9c97fbc5651b9dd",
+        "Description": "Redis TLS desde el worker ECS (self-referencing)"
+      }
+    ]
+  }
+]

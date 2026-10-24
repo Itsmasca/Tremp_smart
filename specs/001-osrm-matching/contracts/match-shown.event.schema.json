@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rides.events/match.shown/v1",
+  "title": "match.shown v1",
+  "description": "Publicado por matching-py en el stream rides.events (campo 'envelope', XADD) por cada búsqueda con al menos un candidato. Los consumidores deduplican por data.requestId.",
+  "type": "object",
+  "required": ["id", "type", "version", "source", "aggregateType", "aggregateId", "occurredAt", "data"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "type": { "const": "match.shown" },
+    "version": { "const": 1 },
+    "source": { "const": "matching-py" },
+    "aggregateType": { "const": "match_request" },
+    "aggregateId": { "type": "string", "format": "uuid", "description": "= data.requestId" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": "object",
+      "required": ["requestId", "passengerId", "modelVersion", "departureAt", "timeWindowMin", "pickup", "dropoff", "candidates"],
+      "properties": {
+        "requestId": { "type": "string", "format": "uuid" },
+        "passengerId": { "type": "string", "format": "uuid" },
+        "modelVersion": { "type": "string" },
+        "departureAt": { "type": "string", "format": "date-time" },
+        "timeWindowMin": { "type": "integer", "minimum": 0 },
+        "pickup": { "$ref": "#/$defs/LatLng", "description": "punto ajustado" },
+        "dropoff": { "$ref": "#/$defs/LatLng", "description": "punto ajustado" },
+        "candidates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["rideId", "rank", "score", "detourS", "pickupEtaS", "features"],
+            "properties": {
+              "rideId": { "type": "string", "format": "uuid" },
+              "rank": { "type": "integer", "minimum": 1 },
+              "score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "detourS": { "type": "integer" },
+              "pickupEtaS": { "type": "integer", "minimum": 0 },
+              "features": {
+                "type": "object",
+                "description": "Características usadas o útiles para el ranker. Claves abiertas; las listadas son las de heuristic-v1.",
+                "properties": {
+                  "detour_s_raw": { "type": "number" },
+                  "detour_limit_s": { "type": "number" },
+                  "pickup_eta_s": { "type": "number" },
+                  "t_pd_s": { "type": "number" },
+                  "t_db_s": { "type": "number" },
+                  "dist_ap_m": { "type": ["number", "null"] },
+                  "dist_pd_m": { "type": ["number", "null"] },
+                  "dist_db_m": { "type": ["number", "null"] },
+                  "corridor_dist_m": { "type": "number" },
+                  "departure_delta_s": { "type": "number" },
+                  "snap_dist_pickup_m": { "type": "number" },
+                  "snap_dist_dropoff_m": { "type": "number" },
+                  "seats_available": { "type": "integer" },
+                  "prefs": { "type": ["object", "null"], "description": "StructuredPreferences v1 del pasajero tal cual, o null" }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "LatLng": {
+      "type": "object",
+      "required": ["lat", "lng"],
+      "properties": { "lat": { "type": "number" }, "lng": { "type": "number" } }
+    }
+  }
+}

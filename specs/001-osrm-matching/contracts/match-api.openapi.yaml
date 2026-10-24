@@ -1,0 +1,134 @@
+openapi: 3.1.0
+info:
+  title: matching-py — API interna
+  version: 1.0.0
+  description: |
+    API interna consumida únicamente por crud-ts (red interna, sin autenticación).
+    El contrato de POST /match no se cambia sin versionar.
+servers:
+  - url: http://matching-py:8000
+paths:
+  /match:
+    post:
+      operationId: postMatch
+      summary: Rides viables para un pasajero, ordenados por relevancia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MatchRequest' }
+            example:
+              requestId: 7b1c2f0e-3d4a-4c8b-9a51-2f1e0c9d8a77
+              passengerId: 0f8e7d6c-5b4a-4392-8170-6f5e4d3c2b1a
+              pickup:  { lat: 21.0186, lng: -89.5847 }
+              dropoff: { lat: 20.9671, lng: -89.6237 }
+              departureAt: '2026-10-26T07:30:00-06:00'
+              timeWindowMin: 30
+              limit: 10
+      responses:
+        '200':
+          description: Búsqueda resuelta (lista vacía si no hay rides viables; no es error)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MatchResponse' }
+        '422':
+          description: Cuerpo inválido o coordenadas fuera del bbox de la península de Yucatán
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationError' }
+              example:
+                detail:
+                  - loc: [body, pickup]
+                    msg: 'coordenada fuera del área de servicio (península de Yucatán)'
+                    type: value_error.out_of_bbox
+        '503':
+          description: Motor de rutas (OSRM) no disponible tras un reintento
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { detail: 'routing engine unavailable' }
+  /health:
+    get:
+      operationId: health
+      summary: Liveness para el healthCheck de ECS (no toca DB ni OSRM)
+      responses:
+        '200':
+          description: Proceso vivo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { status: { type: string, const: ok } }
+components:
+  schemas:
+    LatLng:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lng: { type: number, minimum: -180, maximum: 180 }
+    MatchRequest:
+      type: object
+      required: [requestId, passengerId, pickup, dropoff, departureAt]
+      properties:
+        requestId:     { type: string, format: uuid }
+        passengerId:   { type: string, format: uuid }
+        pickup:        { $ref: '#/components/schemas/LatLng' }
+        dropoff:       { $ref: '#/components/schemas/LatLng' }
+        departureAt:   { type: string, format: date-time, description: ISO-8601 con zona horaria }
+        timeWindowMin: { type: integer, minimum: 0, default: 30 }
+        limit:         { type: integer, minimum: 1, default: 10 }
+    Candidate:
+      type: object
+      required: [rideId, rank, score, detourS, pickupEtaS, snappedPickup, snappedDropoff, routeGeometry]
+      properties:
+        rideId:         { type: string, format: uuid }
+        rank:           { type: integer, minimum: 1 }
+        score:          { type: number, minimum: 0, maximum: 1 }
+        detourS:        { type: integer, description: 'Segundos extra para el conductor; puede ser < 0 por diferencias de grafo' }
+        pickupEtaS:     { type: integer, minimum: 0, description: 'Manejo desde el origen del conductor hasta el pickup ajustado' }
+        snappedPickup:  { $ref: '#/components/schemas/LatLng' }
+        snappedDropoff: { $ref: '#/components/schemas/LatLng' }
+        routeGeometry:
+          description: GeoJSON LineString A→P→D→B, solo para el top ROUTE_GEOMETRY_TOP_K; null en el resto
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/GeoJSONLineString'
+    MatchResponse:
+      type: object
+      required: [requestId, modelVersion, candidates]
+      properties:
+        requestId:    { type: string, format: uuid }
+        modelVersion: { type: string, examples: [heuristic-v1, lgbm-v1] }
+        candidates:
+          type: array
+          items: { $ref: '#/components/schemas/Candidate' }
+    GeoJSONLineString:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type: { type: string, const: LineString }
+        coordinates:
+          type: array
+          minItems: 2
+          items:
+            type: array
+            description: '[lng, lat] (orden GeoJSON)'
+            minItems: 2
+            maxItems: 2
+            items: { type: number }
+    ValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:  { type: array, items: { type: [string, integer] } }
+              msg:  { type: string }
+              type: { type: string }
+    Error:
+      type: object
+      properties:
+        detail: { type: string }
