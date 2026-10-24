@@ -140,10 +140,13 @@ async def _extract_with_retry_and_dlq(
     Returns:
         StructuredPreferences si al menos un intento tuvo éxito, None si ambos fallaron.
     """
-    # Intento 1
+    # Intento 1. Python borra la variable de `except ... as` al salir del bloque: se copia a first_error
+    # para usarla en el intento 2 (antes: UnboundLocalError y el mensaje se reintentaba sin fin).
+    first_error: ValidationError | None = None
     try:
         return llm.extract_preferences(raw_text)
-    except ValidationError as first_error:
+    except ValidationError as exc:
+        first_error = exc
         logger.warning(
             "validación fallida en intento 1, reintentando | error=%s",
             first_error,
