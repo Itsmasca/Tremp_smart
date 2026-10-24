@@ -44,7 +44,13 @@ async def _run() -> int:
     logger.info("proveedor LLM activo | provider=%s", settings.LLM_PROVIDER)
 
     # ── Conexiones ─────────────────────────────────────────────────────────────
-    db_pool = await asyncpg.create_pool(settings.DATABASE_URL, min_size=2, max_size=settings.DB_POOL_MAX_SIZE)
+    # register_vector: sin el codec de pgvector, asyncpg no sabe enviar list[float] a la columna vector
+    # (upsert_embedding fallaba con "expected str, got list").
+    from pgvector.asyncpg import register_vector
+
+    db_pool = await asyncpg.create_pool(
+        settings.DATABASE_URL, min_size=2, max_size=settings.DB_POOL_MAX_SIZE, init=register_vector
+    )
     redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=False)
     osrm = OsrmClient(
         settings.OSRM_URL,

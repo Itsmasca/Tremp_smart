@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # ── AWS Bedrock ────────────────────────────────────────────────────────────
     BEDROCK_REGION: str = "us-east-1"
     # Cross-region inference profile — prefijo "us." distribuye carga entre regiones US
-    BEDROCK_LLM_MODEL_ID: str = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+    BEDROCK_LLM_MODEL_ID: str = "us.anthropic.claude-haiku-5-5"
     # Titan Text Embeddings V2 — soporta dimensiones 256 / 512 / 1024
     BEDROCK_EMBED_MODEL_ID: str = "amazon.titan-embed-text-v2:0"
     EMBED_DIM: int = 256

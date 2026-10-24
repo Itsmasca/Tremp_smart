@@ -72,7 +72,7 @@ Copiar `.env.example` a `.env` y completar los valores.
 | `REDIS_URL` | ✅ | — | URL del broker Redis (ej: `redis://localhost:6379/0`) |
 | `DATABASE_URL` | ✅ | — | DSN Postgres con pgvector (ej: `postgresql://user:pass@host:5432/db`) |
 | `BEDROCK_REGION` | | `us-east-1` | Región AWS donde se invoca Bedrock |
-| `BEDROCK_LLM_MODEL_ID` | | `us.anthropic.claude-3-5-haiku-20241022-v1:0` | Cross-region inference profile del LLM |
+| `BEDROCK_LLM_MODEL_ID` | | `us.anthropic.claude-haiku-5-5` | Cross-region inference profile del LLM |
 | `BEDROCK_EMBED_MODEL_ID` | | `amazon.titan-embed-text-v2:0` | Modelo de embeddings de Bedrock |
 | `EMBED_DIM` | | `256` | Dimensión del vector (Titan V2: 256, 512 o 1024) |
 | `LLM_PROVIDER` | | `bedrock` | `bedrock` \| `fake` — usar `fake` para desarrollo local sin AWS |
@@ -141,7 +141,7 @@ La política siguiente concede solo lo necesario para que `matching-py` invoque 
       "Action": ["bedrock:InvokeModel"],
       "Resource": [
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0",
-        "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-5-5"
       ]
     },
     {
@@ -149,14 +149,14 @@ La política siguiente concede solo lo necesario para que `matching-py` invoque 
       "Effect": "Allow",
       "Action": ["bedrock:InvokeModel"],
       "Resource": [
-        "arn:aws:bedrock:us-east-1:*:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0"
+        "arn:aws:bedrock:us-east-1:*:inference-profile/us.anthropic.claude-haiku-5-5"
       ]
     }
   ]
 }
 ```
 
-> El cross-region inference profile (`us.anthropic.claude-3-5-haiku-*`) requiere también permisos sobre el ARN del perfil en la cuenta. Sustituir `*` en el ARN por el ID de tu cuenta AWS.
+> El cross-region inference profile (`us.anthropic.claude-haiku-5-5`) requiere también permisos sobre el ARN del perfil en la cuenta. Sustituir `*` en el ARN por el ID de tu cuenta AWS.
 
 ---
 

@@ -21,7 +21,7 @@
       "environment": [
         {"name": "LLM_PROVIDER",            "value": "bedrock"},
         {"name": "BEDROCK_REGION",          "value": "us-east-1"},
-        {"name": "BEDROCK_LLM_MODEL_ID",    "value": "us.anthropic.claude-3-5-haiku-20241022-v1:0"},
+        {"name": "BEDROCK_LLM_MODEL_ID",    "value": "us.anthropic.claude-haiku-5-5"},
         {"name": "BEDROCK_EMBED_MODEL_ID",  "value": "amazon.titan-embed-text-v2:0"},
         {"name": "EMBED_DIM",               "value": "256"},
         {"name": "REDIS_STREAM",            "value": "rides.events"},
