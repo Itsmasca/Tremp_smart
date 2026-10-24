@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -41,6 +42,48 @@ class Settings(BaseSettings):
 
     # ── Misc ───────────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
+    DB_POOL_MAX_SIZE: int = Field(default=10, ge=2)
+
+    # ── HTTP ───────────────────────────────────────────────────────────────────
+    HTTP_PORT: int = 8000
+
+    # ── OSRM ───────────────────────────────────────────────────────────────────
+    OSRM_URL: str = "http://osrm:5000"
+    # Debe coincidir con --max-table-size del contenedor OSRM
+    OSRM_MAX_TABLE_SIZE: int = Field(default=100, ge=3)
+    OSRM_CONNECT_TIMEOUT_S: float = 1.0
+    OSRM_READ_TIMEOUT_S: float = 2.0
+
+    # ── Matching ───────────────────────────────────────────────────────────────
+    CANDIDATE_RADIUS_M: float = Field(default=1500, gt=0)
+    MAX_CANDIDATES: int = Field(default=80, ge=1)
+    ROUTE_GEOMETRY_TOP_K: int = Field(default=3, ge=0)
+    # Estados de matches que NO cuentan como match activo (lista separada por comas)
+    MATCH_TERMINAL_STATUSES: str = "rejected,completed,cancelled"
+
+    # ── Scoring heuristic-v1 ───────────────────────────────────────────────────
+    PICKUP_ETA_NORM_S: float = Field(default=1800, gt=0)
+    SCORE_W_DETOUR: float = Field(default=0.5, ge=0)
+    SCORE_W_TIME: float = Field(default=0.3, ge=0)
+    SCORE_W_ETA: float = Field(default=0.2, ge=0)
+
+    # ── Bbox península de Yucatán ──────────────────────────────────────────────
+    BBOX_LAT_MIN: float = 17.8
+    BBOX_LAT_MAX: float = 21.7
+    BBOX_LNG_MIN: float = -92.5
+    BBOX_LNG_MAX: float = -86.7
+
+    @property
+    def match_terminal_statuses(self) -> list[str]:
+        return [s.strip() for s in self.MATCH_TERMINAL_STATUSES.split(",") if s.strip()]
+
+    @model_validator(mode="after")
+    def _validate_matching(self) -> Settings:
+        if self.SCORE_W_DETOUR + self.SCORE_W_TIME + self.SCORE_W_ETA <= 0:
+            raise ValueError("SCORE_W_* deben sumar más de 0")
+        if self.BBOX_LAT_MIN >= self.BBOX_LAT_MAX or self.BBOX_LNG_MIN >= self.BBOX_LNG_MAX:
+            raise ValueError("BBOX_*_MIN debe ser menor que BBOX_*_MAX")
+        return self
 
 
 # Instancia global — importar desde aquí en todos los módulos

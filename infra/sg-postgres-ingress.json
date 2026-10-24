@@ -1,0 +1,13 @@
+[
+  {
+    "IpProtocol": "tcp",
+    "FromPort": 5432,
+    "ToPort": 5432,
+    "UserIdGroupPairs": [
+      {
+        "GroupId": "sg-0a9c97fbc5651b9dd",
+        "Description": "Postgres desde el worker ECS matching-py"
+      }
+    ]
+  }
+]
